@@ -115,7 +115,13 @@ All endpoints below are under `/api/v1`.
 | POST | `/auth/logout` | Refresh cookie | Revoke current refresh session |
 | GET | `/auth/me` | Access token | Return current user and organization |
 | GET | `/organizations/current` | Access token | Return the authenticated tenant |
-| GET | `/organizations/members` | Owner/admin/manager | List organization members |\n| GET/POST | `/resources/facilities` | Authenticated / owner-admin-manager | List or register facilities |\n| GET/POST | `/resources/departments` | Authenticated / owner-admin-manager | List or create facility departments |\n| GET/POST | `/resources/buildings` | Authenticated / owner-admin-manager | List or create buildings and floor counts |\n| GET/POST | `/resources/wards` | Authenticated / owner-admin-manager | List or create wards linked to a building and optional department |\n| GET/POST | `/resources/beds` | Authenticated / owner-admin-manager | List or create bed inventory |\n| PATCH | `/resources/beds/:bedId/status` | Owner/admin/manager/staff | Transition a bed through allowed operational states |
+| GET | `/organizations/members` | Owner/admin/manager | List organization members |
+| GET/POST | `/resources/facilities` | Authenticated / owner-admin-manager | List or register facilities |
+| GET/POST | `/resources/departments` | Authenticated / owner-admin-manager | List or create facility departments |
+| GET/POST | `/resources/buildings` | Authenticated / owner-admin-manager | List or create buildings and floor counts |
+| GET/POST | `/resources/wards` | Authenticated / owner-admin-manager | List or create wards linked to a building and optional department |
+| GET/POST | `/resources/beds` | Authenticated / owner-admin-manager | List or create bed inventory |
+| PATCH | `/resources/beds/:bedId/status` | Owner/admin/manager/staff | Transition a bed through allowed operational states |
 | POST | `/organizations/members` | Owner/admin | Add an existing user to this organization |
 
 The member-add endpoint does not send invitations or emails; the target user must already have a WardPilot account. Resource APIs always derive the organization scope from the authenticated membership. Facility codes are unique per organization; department/building/ward codes are unique within a facility; bed labels are unique within a ward. Ward creation verifies that its building and optional department belong to the same facility and tenant. Bed status transitions enforce a cleaning step after occupancy and prevent assignment while under maintenance. Ownership transfer, organization switching, password reset, email verification, MFA and administrative session management are not implemented yet.
