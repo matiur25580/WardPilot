@@ -3,8 +3,10 @@ import { rateLimit } from 'express-rate-limit';
 import { authCookieName, getCurrentUser, login, logout, refreshSession, register } from './auth.service';
 import { authenticate } from './auth.middleware';
 import { loginSchema, registerSchema } from './auth.schemas';
+import { requireTrustedOrigin } from '../middleware/trusted-origin';
 
 export const authRouter = Router();
+authRouter.use(requireTrustedOrigin);
 const signInLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false, message: { success: false, error: { code: 'AUTH_RATE_LIMITED', message: 'Too many sign-in attempts. Try again later.' } } });
 
 authRouter.post('/register', async (req, res, next) => {

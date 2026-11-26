@@ -2,7 +2,7 @@ import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
 import { env } from '../config/env';
 
-export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (error, _req, res) => {
   if (error instanceof ZodError) {
     res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'The request contains invalid fields.', details: error.flatten().fieldErrors } });
     return;

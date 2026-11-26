@@ -98,6 +98,7 @@ Production startup rejects the development JWT secret defaults. Configure indepe
 - Login returns a short-lived signed access token. The refresh JWT is stored only as an HTTP-only, same-site cookie; the browser UI keeps the access token in memory and does not persist it in local storage.
 - Refresh tokens are stored as SHA-256 hashes in MongoDB and rotated on successful refresh. Reuse of an already-rotated token revokes active sessions for that user and organization.
 - Logout revokes the presented refresh session and clears its cookie.
+- Browser-origin checks reject cross-origin authentication mutations when an Origin header is present; CORS remains an additional browser access policy, not a substitute for server-side authorization.
 - Authenticated requests resolve the current active membership from MongoDB. Organization ID and role are taken from that membership, not trusted from client-supplied request fields.
 - Membership roles are `owner`, `admin`, `manager`, `staff` and `viewer`. Organization member listing is available to owner/admin/manager; adding an existing WardPilot account is restricted to owner/admin.
 - Tenant-owned queries must always include the authenticated `req.auth.tenantId` / `req.auth.organizationId` scope. Do not accept a tenant ID from an untrusted request body or query string.
