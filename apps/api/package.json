@@ -32,6 +32,7 @@
     "tsx": "^4.19.2",
     "vitest": "^2.1.8",
     "@types/cookie-parser": "^1.4.8",
-    "@types/jsonwebtoken": "^9.0.7"
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/bcryptjs": "^2.4.6"
   }
 }
