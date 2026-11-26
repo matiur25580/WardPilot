@@ -37,7 +37,7 @@ async function issueSession(userId: string, organizationId: string, req: Request
   const secret = createRefreshSecret();
   const refreshToken = signRefreshToken(identity, secret);
   const tokenHash = hashToken(refreshToken);
-  await RefreshSession.create({
+  const refreshSession = await RefreshSession.create({
     ...identity,
     tokenHash,
     expiresAt: new Date(Date.now() + ttlMilliseconds(env.JWT_REFRESH_TTL)),
@@ -47,7 +47,7 @@ async function issueSession(userId: string, organizationId: string, req: Request
   setRefreshCookie(res, refreshToken);
   return {
     tokenHash,
-    tokens: { accessToken: signAccessToken(identity), tokenType: 'Bearer', expiresIn: env.JWT_ACCESS_TTL },
+    tokens: { accessToken: signAccessToken({ ...identity, sessionId: String(refreshSession._id) }), tokenType: 'Bearer', expiresIn: env.JWT_ACCESS_TTL },
   };
 }
 

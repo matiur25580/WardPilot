@@ -8,6 +8,7 @@ export interface TokenIdentity {
 }
 export interface AccessClaims extends JwtPayload, TokenIdentity {
   type: 'access';
+  sessionId: string;
 }
 export interface RefreshClaims extends JwtPayload, TokenIdentity {
   type: 'refresh';
@@ -20,7 +21,7 @@ export function hashToken(token: string): string {
 export function createRefreshSecret(): string {
   return randomBytes(48).toString('base64url');
 }
-export function signAccessToken(identity: TokenIdentity): string {
+export function signAccessToken(identity: TokenIdentity & { sessionId: string }): string {
   return jwt.sign({ ...identity, type: 'access' }, env.JWT_ACCESS_SECRET, { expiresIn: env.JWT_ACCESS_TTL as SignOptions['expiresIn'], issuer: 'wardpilot-api', audience: 'wardpilot-web' });
 }
 export function signRefreshToken(identity: TokenIdentity, secret: string): string {
@@ -28,7 +29,7 @@ export function signRefreshToken(identity: TokenIdentity, secret: string): strin
 }
 export function verifyAccessToken(token: string): AccessClaims {
   const payload = jwt.verify(token, env.JWT_ACCESS_SECRET, { issuer: 'wardpilot-api', audience: 'wardpilot-web' });
-  if (typeof payload === 'string' || payload.type !== 'access' || typeof payload.userId !== 'string' || typeof payload.organizationId !== 'string') throw new Error('Invalid access token');
+  if (typeof payload === 'string' || payload.type !== 'access' || typeof payload.userId !== 'string' || typeof payload.organizationId !== 'string' || typeof payload.sessionId !== 'string') throw new Error('Invalid access token');
   return payload as AccessClaims;
 }
 export function verifyRefreshToken(token: string): RefreshClaims {

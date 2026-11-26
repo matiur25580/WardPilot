@@ -96,7 +96,7 @@ Production startup rejects the development JWT secret defaults. Configure indepe
 - Registration creates a user, a new organization and an initial `owner` membership.
 - Passwords are hashed with bcryptjs (12 rounds); password hashes are never selected by default.
 - Login returns a short-lived signed access token. The refresh JWT is stored only as an HTTP-only, same-site cookie; the browser UI keeps the access token in memory and does not persist it in local storage.
-- Refresh tokens are stored as SHA-256 hashes in MongoDB and rotated on successful refresh. Reuse of an already-rotated token revokes active sessions for that user and organization.
+- Refresh tokens are stored as SHA-256 hashes in MongoDB and rotated on successful refresh. Access tokens are bound to their refresh-session record, so rotation, logout or detected token reuse invalidates the associated access token immediately. Reuse of an already-rotated token revokes active sessions for that user and organization.
 - Logout revokes the presented refresh session and clears its cookie.
 - Browser-origin checks reject cross-origin authentication mutations when an Origin header is present; CORS remains an additional browser access policy, not a substitute for server-side authorization.
 - Authenticated requests resolve the current active membership from MongoDB. Organization ID and role are taken from that membership, not trusted from client-supplied request fields.
