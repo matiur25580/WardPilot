@@ -186,6 +186,7 @@ integrationDescribe('resource registry HTTP integration (replica-set MongoDB)', 
     const illegalTransition = await request(app).patch(`/api/v1/resources/beds/${bedId}/status`).set(auth(owner)).send({ status: 'occupied' });
     expect(illegalTransition.status).toBe(200);
     const directRelease = await request(app).patch(`/api/v1/resources/beds/${bedId}/status`).set(auth(owner)).send({ status: 'available' });
-    expect(directRelease.status).toBe(400);
+    expect(directRelease.status).toBe(409);
+    expect(directRelease.body.error.code).toBe('INVALID_BED_STATUS_TRANSITION');
   });
 });
