@@ -4,7 +4,7 @@
 
 WardPilot is an enterprise-oriented hospital operations and capacity intelligence platform. It is being developed as a modular web application for coordinating hospital resources and patient flow.
 
-> **Current stage: Milestone 3 — hospital and resource registry.** The repository includes enterprise identity and tenant-scoped resource directories for facilities, departments, buildings, wards and bed inventory. Patient workflows, AI forecasting, external healthcare integrations and real operational patient data are not implemented.
+> **Current stage: Milestone 4 — patient flow operations.** The repository includes enterprise identity, tenant-scoped hospital resources, and an initial operational admission/transfer/discharge workflow. It is not a clinical EHR and does not provide diagnosis, orders, treatment plans or clinical decision support.
 
 ## Technology
 
@@ -122,9 +122,13 @@ All endpoints below are under `/api/v1`.
 | GET/POST | `/resources/wards` | Authenticated / owner-admin-manager | List or create wards linked to a building and optional department |
 | GET/POST | `/resources/beds` | Authenticated / owner-admin-manager | List or create bed inventory |
 | PATCH | `/resources/beds/:bedId/status` | Owner/admin/manager/staff | Transition a bed through allowed operational states |
+| GET/POST | `/patient-flow/admissions` | Authenticated / owner-admin-manager-staff | List active admissions or admit a patient to an available bed |
+| POST | `/patient-flow/admissions/:admissionId/transfer` | Owner/admin/manager/staff | Atomically move an active admission to another available bed |
+| POST | `/patient-flow/admissions/:admissionId/discharge` | Owner/admin/manager/staff | Complete an operational discharge and release bed to cleaning |
+| GET | `/patient-flow/admissions/:admissionId/events` | Authenticated | Read tenant-scoped admission event history |
 | POST | `/organizations/members` | Owner/admin | Add an existing user to this organization |
 
-The member-add endpoint does not send invitations or emails; the target user must already have a WardPilot account. Resource APIs always derive the organization scope from the authenticated membership. Facility codes are unique per organization; department/building/ward codes are unique within a facility; bed labels are unique within a ward. Ward creation verifies that its building and optional department belong to the same facility and tenant. Bed status transitions enforce a cleaning step after occupancy and prevent assignment while under maintenance. Ownership transfer, organization switching, password reset, email verification, MFA and administrative session management are not implemented yet.
+The member-add endpoint does not send invitations or emails; the target user must already have a WardPilot account. Resource APIs always derive the organization scope from the authenticated membership. Facility codes are unique per organization; department/building/ward codes are unique within a facility; bed labels are unique within a ward. Ward creation verifies that its building and optional department belong to the same facility and tenant. Bed status transitions enforce a cleaning step after occupancy and prevent assignment while under maintenance. Patient-flow records use tenant-scoped patient identifiers (medical record number plus minimal identity fields), transactional bed allocation, transfer and discharge, and append-only actor/timestamped operational events. A partial unique index also prevents more than one active admission for the same patient within an organization. Admission/transfer/discharge require MongoDB transactions, so MongoDB must run as a replica set (including local development) for these workflows. Ownership transfer, organization switching, password reset, email verification, MFA and administrative session management are not implemented yet.
 
 ## Shared scripts
 
@@ -159,7 +163,7 @@ Registration currently creates organization/user/membership records using compen
 5. **Milestone 5 — Workforce and inventory:** staff scheduling and critical resource visibility.
 6. **Milestone 6 — Operational intelligence:** validated analytics and forecasting based on governed application data.
 
-Roadmap items are plans, not claims of existing functionality. Clinical workflows, privacy, security, regulatory requirements and operational safety require domain-expert review before real-world use.
+Roadmap items are plans, not claims of existing functionality. Patient flow is an operational prototype only. It does not replace clinical documentation or hospital information systems. The current release has no consent management, patient portal, clinical notes, diagnosis, medication, orders, insurance, billing, or integration with national health systems. Clinical workflows, privacy, security, regulatory requirements and operational safety require domain-expert review before real-world use.
 
 ## License
 

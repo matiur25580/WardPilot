@@ -47,7 +47,7 @@ integrationDescribe('resource registry HTTP integration (replica-set MongoDB)', 
   });
 
   beforeAll(async () => {
-    await mongoose.connect(mongoUri!, { serverSelectionTimeoutMS: 10_000 });
+    await mongoose.connect(mongoUri!, { dbName: 'wardpilot_resource_test', serverSelectionTimeoutMS: 10_000 });
     await Promise.all([Organization, User, Membership, RefreshSession, Facility, Department, Building, Ward, Bed].map((model) => model.init()));
   });
 
