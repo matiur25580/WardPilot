@@ -5,6 +5,7 @@ import { authenticate, requireRoles } from '../auth/auth.middleware';
 import { Bed, Facility, Ward } from '../models/resource.model';
 import { Admission, Patient, PatientFlowEvent } from '../models/patient-flow.model';
 import { canDischarge, canTransfer, normalizeMedicalRecordNumber } from '../services/patient-flow';
+import { recordAuditEvent } from '../services/audit';
 
 export const patientFlowRouter = Router();
 patientFlowRouter.use(authenticate);
@@ -91,6 +92,7 @@ patientFlowRouter.post('/admissions', writable, async (req, res, next) => {
         organizationId: org, admissionId, patientId: patient._id, actorId: req.auth!.userId,
         type: 'admitted', toBedId: bed._id, note: input.admissionReason,
       }], { session });
+      await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'admission.created', entityType: 'admission', entityId: admissionId!, facilityId: input.facilityId, summary: 'Patient admission created.', details: { destinationBedId: String(bed._id) } }, session);
     });
     const row = await Admission.findOne({ _id: admissionId, organizationId: org })
       .populate('patientId', 'medicalRecordNumber firstName lastName')
@@ -126,6 +128,7 @@ patientFlowRouter.post('/admissions/:admissionId/transfer', writable, async (req
         organizationId: org, admissionId, patientId: admission.patientId, actorId: req.auth!.userId,
         type: 'transferred', fromBedId: previousBedId, toBedId: destination._id, note,
       }], { session });
+      await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'admission.transferred', entityType: 'admission', entityId: admission._id, facilityId: admission.facilityId, summary: 'Patient admission transferred to another bed.', details: { sourceBedId: String(previousBedId), destinationBedId: String(destination._id) } }, session);
     });
     const row = await Admission.findOne({ _id: admissionId, organizationId: org })
       .populate('patientId', 'medicalRecordNumber firstName lastName')
@@ -151,6 +154,7 @@ patientFlowRouter.post('/admissions/:admissionId/discharge', writable, async (re
         organizationId: org, admissionId, patientId: admission.patientId, actorId: req.auth!.userId,
         type: 'discharged', fromBedId: admission.bedId, note: parsed.data.note || '',
       }], { session });
+      await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'admission.discharged', entityType: 'admission', entityId: admission._id, facilityId: admission.facilityId, summary: 'Patient admission discharged.', details: { sourceBedId: String(admission.bedId) } }, session);
     });
     const row = await Admission.findOne({ _id: admissionId, organizationId: org })
       .populate('patientId', 'medicalRecordNumber firstName lastName').populate('bedId', 'label status').lean();

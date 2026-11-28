@@ -4,6 +4,7 @@ import { Membership } from '../models/membership.model';
 import { InventoryItem, InventoryMovement } from '../models/inventory.model';
 import { StaffScheduleLock, StaffShift, StaffShiftEvent } from '../models/staffing.model';
 import { isValidShiftWindow, nextStockBalance } from './operations.rules';
+import { recordAuditEvent } from './audit';
 
 export class OperationsError extends Error {
   status: number; code: string;
@@ -52,6 +53,7 @@ export async function createStaffShift(org: string, actor: string, input: {
         organizationId: org, shiftId: created._id, actorId: actor, action: 'created',
         details: { userId: input.userId, facilityId: input.facilityId, startAt: input.startAt, endAt: input.endAt }
       }], { session });
+      await recordAuditEvent({ organizationId: org, actorId: actor, action: 'staff_shift.created', entityType: 'staff_shift', entityId: created._id, facilityId: input.facilityId, summary: 'Staff shift created.', details: { shiftType: input.shiftType, startAt: input.startAt, endAt: input.endAt } }, session);
     });
   } finally { await session.endSession(); }
   if (!shiftId) fail(500, 'SHIFT_CREATE_FAILED', 'The staff shift could not be created.');
@@ -88,6 +90,7 @@ export async function transitionStaffShift(org: string, actor: string, id: strin
       await StaffShiftEvent.create([{
         organizationId: org, shiftId: shift._id, actorId: actor, action: status, details: { from: previous, to: status }
       }], { session });
+      await recordAuditEvent({ organizationId: org, actorId: actor, action: 'staff_shift.status_changed', entityType: 'staff_shift', entityId: shift._id, facilityId: shift.facilityId, summary: `Staff shift changed from ${previous} to ${status}.`, details: { fromStatus: previous, toStatus: status } }, session);
     });
   } finally { await session.endSession(); }
   return StaffShift.findOne({ _id: id, organizationId: org }).populate('userId', 'firstName lastName email').populate('facilityId', 'name code').populate('departmentId', 'name code').lean();
@@ -100,10 +103,12 @@ export async function createInventoryItem(org: string, actor: string, input: {
   const facility = await Facility.findOne({ _id: input.facilityId, organizationId: org, status: 'active' }).select('_id').lean();
   if (!facility) fail(404, 'FACILITY_NOT_FOUND', 'The active facility was not found in this organization.');
   if (input.parLevel < input.reorderPoint) fail(400, 'INVALID_STOCK_LEVELS', 'Par level must be greater than or equal to the reorder point.');
-  return InventoryItem.create({
+  const item = await InventoryItem.create({
     ...input, itemCode: input.itemCode.toUpperCase(), organizationId: org,
     onHand: 0, createdBy: actor, updatedBy: actor
   });
+  await recordAuditEvent({ organizationId: org, actorId: actor, action: 'inventory_item.created', entityType: 'inventory_item', entityId: item._id, facilityId: item.facilityId, summary: `Inventory item ${item.itemCode} created.`, details: { itemCode: item.itemCode } });
+  return item;
 }
 
 export async function listInventoryItems(org: string, filters: { facilityId?: string; lowStock?: boolean }) {
@@ -149,6 +154,7 @@ export async function recordInventoryMovement(org: string, actor: string, itemId
         reference: input.reference ?? '', idempotencyKey: input.idempotencyKey, actorId: actor
       }], { session });
       if (!movement) fail(500, 'INVENTORY_MOVEMENT_FAILED', 'The stock movement could not be recorded.');
+      await recordAuditEvent({ organizationId: org, actorId: actor, action: 'inventory.movement_recorded', entityType: 'inventory_movement', entityId: movement._id, facilityId: item.facilityId, summary: `Inventory ${input.type} movement recorded for ${item.itemCode}.`, details: { itemCode: item.itemCode, quantityChange: input.quantityChange, balanceAfter: balance } }, session);
       movementId = movement._id;
     });
   } catch (error) {

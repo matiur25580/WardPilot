@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authenticate, requireRoles } from '../auth/auth.middleware';
 import { Bed, Building, Department, Facility, Ward } from '../models/resource.model';
 import { assertBedStatusTransition, bedStatuses } from '../services/bed-status';
+import { recordAuditEvent } from '../services/audit';
 
 export const resourceRouter = Router();
 resourceRouter.use(authenticate);
@@ -56,6 +57,7 @@ resourceRouter.post('/facilities', requireRoles('owner', 'admin', 'manager'), as
   try {
     const input = facilityInput.parse(req.body);
     const row = await Facility.create({ ...input, organizationId: tenantId(req) });
+    await recordAuditEvent({ organizationId: tenantId(req), actorId: req.auth!.userId, action: 'facility.created', entityType: 'facility', entityId: row._id, facilityId: row._id, summary: `Facility ${row.code} created.`, details: { facilityCode: row.code } });
     res.status(201).json({ success: true, data: row });
   } catch (error) { next(error); }
 });
@@ -73,6 +75,7 @@ resourceRouter.post('/departments', requireRoles('owner', 'admin', 'manager'), a
     const input = departmentInput.parse(req.body); const org = tenantId(req);
     await scopedFacility(input.facilityId, org);
     const row = await Department.create({ ...input, organizationId: org });
+    await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'department.created', entityType: 'department', entityId: row._id, facilityId: row.facilityId, summary: `Department ${row.code} created.` });
     res.status(201).json({ success: true, data: row });
   } catch (error) { next(error); }
 });
@@ -90,6 +93,7 @@ resourceRouter.post('/buildings', requireRoles('owner', 'admin', 'manager'), asy
     const input = buildingInput.parse(req.body); const org = tenantId(req);
     await scopedFacility(input.facilityId, org);
     const row = await Building.create({ ...input, organizationId: org });
+    await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'building.created', entityType: 'building', entityId: row._id, facilityId: row.facilityId, summary: `Building ${row.code} created.` });
     res.status(201).json({ success: true, data: row });
   } catch (error) { next(error); }
 });
@@ -114,6 +118,7 @@ resourceRouter.post('/wards', requireRoles('owner', 'admin', 'manager'), async (
       if (!department) fail(404, 'DEPARTMENT_NOT_FOUND', 'The department was not found in this facility.');
     }
     const row = await Ward.create({ ...input, organizationId: org, departmentId: input.departmentId || null });
+    await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'ward.created', entityType: 'ward', entityId: row._id, facilityId: row.facilityId, summary: `Ward ${row.code} created.` });
     res.status(201).json({ success: true, data: row });
   } catch (error) { next(error); }
 });
@@ -135,6 +140,7 @@ resourceRouter.post('/beds', requireRoles('owner', 'admin', 'manager'), async (r
     const ward = await Ward.findOne({ _id: input.wardId, facilityId: input.facilityId, organizationId: org, status: 'active' }).select('_id').lean();
     if (!ward) fail(404, 'WARD_NOT_FOUND', 'The ward was not found in this facility.');
     const row = await Bed.create({ ...input, organizationId: org, status: 'available' });
+    await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'bed.created', entityType: 'bed', entityId: row._id, facilityId: row.facilityId, summary: `Bed ${row.label} created.`, details: { bedLabel: row.label, toStatus: 'available' } });
     res.status(201).json({ success: true, data: row });
   } catch (error) { next(error); }
 });
@@ -146,8 +152,10 @@ resourceRouter.patch('/beds/:bedId/status', requireRoles('owner', 'admin', 'mana
     const bed = await Bed.findOne({ _id: bedId, organizationId: org });
     if (!bed) fail(404, 'BED_NOT_FOUND', 'The bed was not found in this organization.');
     assertBedStatusTransition(bed.status, status);
+    const previousStatus = bed.status;
     bed.status = status;
     await bed.save();
+    await recordAuditEvent({ organizationId: org, actorId: req.auth!.userId, action: 'bed.status_changed', entityType: 'bed', entityId: bed._id, facilityId: bed.facilityId, summary: `Bed ${bed.label} changed from ${previousStatus} to ${status}.`, details: { bedLabel: bed.label, fromStatus: previousStatus, toStatus: status } });
     res.json({ success: true, data: bed });
   } catch (error) { next(error); }
 });
