@@ -4,7 +4,7 @@
 
 WardPilot is an enterprise-oriented hospital operations and capacity intelligence platform. It is being developed as a modular web application for coordinating hospital resources and patient flow.
 
-> **Current stage: Milestone 5 — workforce and inventory implementation.** The repository includes enterprise identity, tenant-scoped hospital resources, patient-flow operations, workforce shift scheduling and a critical-supply stock ledger. It is not a clinical EHR and does not provide diagnosis, orders, treatment plans or clinical decision support.
+> **Current stage: Milestone 7 — audit trail and governance.** The repository includes enterprise identity, tenant-scoped hospital resources, patient-flow operations, workforce shift scheduling and a critical-supply stock ledger. It is not a clinical EHR and does not provide diagnosis, orders, treatment plans or clinical decision support.
 
 ## Technology
 
@@ -162,8 +162,9 @@ Registration currently creates organization/user/membership records using compen
 4. **Milestone 4 — Patient flow operations:** admissions, transfers, discharge coordination and workflow state transitions.
 5. **Milestone 5 — Workforce and inventory:** staff scheduling, overlap prevention, shift event history, critical supply register, low-stock indicators and idempotent inventory movements (implementation on feature branch).
 6. **Milestone 6 — Operational intelligence:** tenant-scoped capacity, patient-flow, workforce and inventory summaries with deterministic operational signals.
+7. **Milestone 7 — Audit and governance:** role-restricted tenant-scoped audit history for critical operational changes.
 
-Milestone 6 adds aggregate operational intelligence. See [Operational intelligence documentation](docs/operational-intelligence.md) for metric definitions and limitations. Roadmap items are plans, not claims of existing functionality. Patient flow is an operational prototype only. It does not replace clinical documentation or hospital information systems. The current release has no consent management, patient portal, clinical notes, diagnosis, medication, orders, insurance, billing, or integration with national health systems. Clinical workflows, privacy, security, regulatory requirements and operational safety require domain-expert review before real-world use.
+Milestone 6 adds aggregate operational intelligence. See [Operational intelligence documentation](docs/operational-intelligence.md) for metric definitions and limitations. See [Audit trail and governance](docs/audit-governance.md) for event coverage, privacy boundaries and limitations. Roadmap items are plans, not claims of existing functionality. Patient flow is an operational prototype only. It does not replace clinical documentation or hospital information systems. The current release has no consent management, patient portal, clinical notes, diagnosis, medication, orders, insurance, billing, or integration with national health systems. Clinical workflows, privacy, security, regulatory requirements and operational safety require domain-expert review before real-world use.
 
 ## License
 

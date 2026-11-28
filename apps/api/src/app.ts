@@ -13,6 +13,7 @@ import { resourceRouter } from './routes/resource.routes';
 import { patientFlowRouter } from './routes/patient-flow.routes';
 import { operationsRouter } from './routes/operations.routes';
 import { intelligenceRouter } from './routes/intelligence.routes';
+import { auditRouter } from './routes/audit.routes';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -30,5 +31,6 @@ app.use(`${env.API_BASE_PATH}/resources`, resourceRouter);
 app.use(`${env.API_BASE_PATH}/patient-flow`, patientFlowRouter);
 app.use(`${env.API_BASE_PATH}/operations`, operationsRouter);
 app.use(`${env.API_BASE_PATH}/intelligence`, intelligenceRouter);
+app.use(`${env.API_BASE_PATH}/audit`, auditRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
