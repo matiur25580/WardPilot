@@ -5,6 +5,7 @@ type Identity = {
   organization: { id: string; name: string; slug: string; role: string };
 };
 type Session = Identity & { accessToken: string; tokenType: 'Bearer'; expiresIn: string };
+type Facility = { _id: string; name: string; code: string; type: string; status: string; address: { city: string; country: string } };
 type ApiEnvelope<T> = { success: boolean; data?: T; error?: { code: string; message: string; details?: Record<string, string[]> } };
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
@@ -29,6 +30,32 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ firstName: '', lastName: '', organizationName: '', email: '', password: '' });
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [facilityForm, setFacilityForm] = useState({ name: '', code: '', type: 'hospital', line1: '', city: '', country: 'India' });
+  const [registryError, setRegistryError] = useState('');
+  const [registryLoading, setRegistryLoading] = useState(false);
+  const canManageRegistry = ['owner', 'admin', 'manager'].includes(session?.organization.role || '');
+
+  useEffect(() => {
+    if (!session?.accessToken) { setFacilities([]); return; }
+    let active = true;
+    void apiRequest<Facility[]>('/resources/facilities', {}, session.accessToken)
+      .then((rows) => { if (active) setFacilities(rows); })
+      .catch((caught) => { if (active) setRegistryError(caught instanceof Error ? caught.message : 'Unable to load facilities.'); });
+    return () => { active = false; };
+  }, [session?.accessToken]);
+
+  async function createFacility(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!session) return;
+    setRegistryLoading(true); setRegistryError('');
+    try {
+      const created = await apiRequest<Facility>('/resources/facilities', { method: 'POST', body: JSON.stringify({ name: facilityForm.name, code: facilityForm.code, type: facilityForm.type, address: { line1: facilityForm.line1, city: facilityForm.city, country: facilityForm.country } }) }, session.accessToken);
+      setFacilities((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)));
+      setFacilityForm({ name: '', code: '', type: 'hospital', line1: '', city: '', country: 'India' });
+    } catch (caught) { setRegistryError(caught instanceof Error ? caught.message : 'Unable to create facility.'); }
+    finally { setRegistryLoading(false); }
+  }
 
   useEffect(() => {
     let active = true;
@@ -78,7 +105,20 @@ export default function App() {
   if (checkingSession) return <main className="auth-shell"><div className="auth-card loading-card">Restoring your secure session…</div></main>;
 
   if (session) {
-    return <main className="auth-shell"><nav className="topbar"><a className="brand" href="/"><span className="brand-mark">W</span><span>wardpilot</span></a><span className="environment"><i /> Secure workspace</span></nav><section className="welcome-card"><div className="eyebrow"><span /> WORKSPACE ACCESS CONFIRMED</div><h1>Welcome back,<br /><em>{session.user.firstName}.</em></h1><p className="intro">You are signed in to <strong>{session.organization.name}</strong> as <strong>{session.organization.role}</strong>. Your workspace identity and organization membership have been verified.</p><div className="session-details"><div><span>ACCOUNT</span><strong>{session.user.email}</strong></div><div><span>ORGANIZATION</span><strong>{session.organization.name}</strong></div><div><span>ROLE</span><strong>{session.organization.role}</strong></div></div><button className="primary-button" onClick={() => void signOut()}>Sign out</button></section><footer><span>WARDPILOT</span><span>Organization-scoped access · Milestone 02</span></footer></main>;
+    return <main className="auth-shell workspace-shell">
+      <nav className="topbar"><a className="brand" href="/"><span className="brand-mark">W</span><span>wardpilot</span></a><div className="workspace-nav"><span className="environment"><i /> {session.organization.name}</span><button className="signout-button" onClick={() => void signOut()}>Sign out</button></div></nav>
+      <section className="workspace-heading"><div><div className="eyebrow"><span /> HOSPITAL OPERATIONS / RESOURCE DIRECTORY</div><h1>Hospital <em>registry.</em></h1><p className="intro">A governed directory of facilities and the physical resources that support care delivery.</p></div><div className="role-chip">{session.organization.role} access</div></section>
+      <section className="registry-stats"><article><span>FACILITIES</span><strong>{facilities.length.toString().padStart(2, '0')}</strong><small>Registered locations</small></article><article><span>ORGANIZATION</span><strong className="stat-text">{session.organization.name}</strong><small>Tenant-scoped workspace</small></article><article><span>ACCESS CONTROL</span><strong className="stat-text">Verified</strong><small>Role: {session.organization.role}</small></article></section>
+      <section className="registry-layout"><div className="facility-panel"><div className="panel-heading"><div><span className="kicker">RESOURCE DIRECTORY</span><h2>Facilities</h2></div><span className="count-pill">{facilities.length} locations</span></div>
+        {registryError && <p className="form-error" role="alert">{registryError}</p>}
+        {facilities.length === 0 ? <div className="empty-state"><span>⌂</span><strong>No facilities registered yet</strong><p>Add your first hospital or care location to begin structuring departments, buildings, wards and beds.</p></div> : <div className="facility-list">{facilities.map((facility) => <article className="facility-row" key={facility._id}><div className="facility-icon">H</div><div className="facility-info"><strong>{facility.name}</strong><span>{facility.code} · {facility.type.replace('_', ' ')}</span><small>{facility.address.city}, {facility.address.country}</small></div><span className="status">{facility.status}</span></article>)}</div>}
+      </div>
+      <aside className="create-panel"><span className="kicker">NEW LOCATION</span><h2>Register a facility</h2><p>Create a tenant-owned hospital, clinic or specialty centre.</p>
+        {canManageRegistry ? <form onSubmit={(event) => void createFacility(event)}><label>Facility name<input value={facilityForm.name} onChange={(event) => setFacilityForm({ ...facilityForm, name: event.target.value })} required minLength={2} maxLength={140} placeholder="e.g. Northside Hospital" /></label><label>Facility code<input value={facilityForm.code} onChange={(event) => setFacilityForm({ ...facilityForm, code: event.target.value })} required minLength={2} maxLength={24} placeholder="NORTH-01" /></label><label>Facility type<select value={facilityForm.type} onChange={(event) => setFacilityForm({ ...facilityForm, type: event.target.value })}><option value="hospital">Hospital</option><option value="clinic">Clinic</option><option value="urgent_care">Urgent care</option><option value="specialty_center">Specialty centre</option></select></label><label>Street address<input value={facilityForm.line1} onChange={(event) => setFacilityForm({ ...facilityForm, line1: event.target.value })} required minLength={2} maxLength={160} placeholder="Street and building" /></label><div className="field-row"><label>City<input value={facilityForm.city} onChange={(event) => setFacilityForm({ ...facilityForm, city: event.target.value })} required minLength={2} maxLength={80} /></label><label>Country<input value={facilityForm.country} onChange={(event) => setFacilityForm({ ...facilityForm, country: event.target.value })} required minLength={2} maxLength={80} /></label></div><button className="primary-button full-button" type="submit" disabled={registryLoading}>{registryLoading ? 'Saving…' : 'Add facility'} <span>↗</span></button></form> : <p className="permission-note">Your membership role can view facilities. Ask an organization owner, admin or manager to register new locations.</p>}
+      </aside></section>
+      <section className="registry-roadmap"><div><span className="kicker">RESOURCE HIERARCHY</span><h2>One connected physical model</h2></div><div className="hierarchy"><span>Facility</span><b>→</b><span>Building / Department</span><b>→</b><span>Ward</span><b>→</b><span>Bed inventory</span></div><p>Departments, buildings, wards and bed status workflows are exposed through the tenant-scoped resources API. Bed status transitions are validated to preserve cleaning and maintenance steps.</p></section>
+      <footer><span>WARDPILOT</span><span>Hospital &amp; resource registry · Milestone 03</span></footer>
+    </main>;
   }
 
   return <main className="auth-shell">

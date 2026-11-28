@@ -4,7 +4,7 @@
 
 WardPilot is an enterprise-oriented hospital operations and capacity intelligence platform. It is being developed as a modular web application for coordinating hospital resources and patient flow.
 
-> **Current stage: Milestone 2 — identity and multi-tenancy foundation.** The repository includes a React/TypeScript web app, an Express/TypeScript API, MongoDB persistence, organization registration, authentication, rotating refresh sessions, organization memberships and role-aware tenant access. Hospital workflows, AI forecasting, external healthcare integrations and real operational patient data are not implemented.
+> **Current stage: Milestone 3 — hospital and resource registry.** The repository includes enterprise identity and tenant-scoped resource directories for facilities, departments, buildings, wards and bed inventory. Patient workflows, AI forecasting, external healthcare integrations and real operational patient data are not implemented.
 
 ## Technology
 
@@ -116,9 +116,15 @@ All endpoints below are under `/api/v1`.
 | GET | `/auth/me` | Access token | Return current user and organization |
 | GET | `/organizations/current` | Access token | Return the authenticated tenant |
 | GET | `/organizations/members` | Owner/admin/manager | List organization members |
+| GET/POST | `/resources/facilities` | Authenticated / owner-admin-manager | List or register facilities |
+| GET/POST | `/resources/departments` | Authenticated / owner-admin-manager | List or create facility departments |
+| GET/POST | `/resources/buildings` | Authenticated / owner-admin-manager | List or create buildings and floor counts |
+| GET/POST | `/resources/wards` | Authenticated / owner-admin-manager | List or create wards linked to a building and optional department |
+| GET/POST | `/resources/beds` | Authenticated / owner-admin-manager | List or create bed inventory |
+| PATCH | `/resources/beds/:bedId/status` | Owner/admin/manager/staff | Transition a bed through allowed operational states |
 | POST | `/organizations/members` | Owner/admin | Add an existing user to this organization |
 
-The member-add endpoint does not send invitations or emails; the target user must already have a WardPilot account. Ownership transfer, organization switching, password reset, email verification, MFA and administrative session management are not implemented yet.
+The member-add endpoint does not send invitations or emails; the target user must already have a WardPilot account. Resource APIs always derive the organization scope from the authenticated membership. Facility codes are unique per organization; department/building/ward codes are unique within a facility; bed labels are unique within a ward. Ward creation verifies that its building and optional department belong to the same facility and tenant. Bed status transitions enforce a cleaning step after occupancy and prevent assignment while under maintenance. Ownership transfer, organization switching, password reset, email verification, MFA and administrative session management are not implemented yet.
 
 ## Shared scripts
 
