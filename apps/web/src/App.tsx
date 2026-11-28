@@ -1,5 +1,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import PatientFlowPanel from './PatientFlowPanel';
+import OperationsPanel from './OperationsPanel';
+import './operations.css';
 
 type Identity = {
   user: { id: string; email: string; firstName: string; lastName: string };
@@ -118,6 +120,7 @@ export default function App() {
         {canManageRegistry ? <form onSubmit={(event) => void createFacility(event)}><label>Facility name<input value={facilityForm.name} onChange={(event) => setFacilityForm({ ...facilityForm, name: event.target.value })} required minLength={2} maxLength={140} placeholder="e.g. Northside Hospital" /></label><label>Facility code<input value={facilityForm.code} onChange={(event) => setFacilityForm({ ...facilityForm, code: event.target.value })} required minLength={2} maxLength={24} placeholder="NORTH-01" /></label><label>Facility type<select value={facilityForm.type} onChange={(event) => setFacilityForm({ ...facilityForm, type: event.target.value })}><option value="hospital">Hospital</option><option value="clinic">Clinic</option><option value="urgent_care">Urgent care</option><option value="specialty_center">Specialty centre</option></select></label><label>Street address<input value={facilityForm.line1} onChange={(event) => setFacilityForm({ ...facilityForm, line1: event.target.value })} required minLength={2} maxLength={160} placeholder="Street and building" /></label><div className="field-row"><label>City<input value={facilityForm.city} onChange={(event) => setFacilityForm({ ...facilityForm, city: event.target.value })} required minLength={2} maxLength={80} /></label><label>Country<input value={facilityForm.country} onChange={(event) => setFacilityForm({ ...facilityForm, country: event.target.value })} required minLength={2} maxLength={80} /></label></div><button className="primary-button full-button" type="submit" disabled={registryLoading}>{registryLoading ? 'Saving…' : 'Add facility'} <span>↗</span></button></form> : <p className="permission-note">Your membership role can view facilities. Ask an organization owner, admin or manager to register new locations.</p>}
       </aside></section>
       <PatientFlowPanel accessToken={session.accessToken} facilities={facilities} />
+      <OperationsPanel accessToken={session.accessToken} facilities={facilities} role={session.organization.role} />
       <section className="registry-roadmap"><div><span className="kicker">RESOURCE HIERARCHY</span><h2>One connected physical model</h2></div><div className="hierarchy"><span>Facility</span><b>→</b><span>Building / Department</span><b>→</b><span>Ward</span><b>→</b><span>Bed inventory</span></div><p>Departments, buildings, wards and bed status workflows are exposed through the tenant-scoped resources API. Bed status transitions are validated to preserve cleaning and maintenance steps.</p></section>
       <footer><span>WARDPILOT</span><span>Hospital &amp; resource registry · Milestone 03</span></footer>
     </main>;
