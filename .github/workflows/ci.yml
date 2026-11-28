@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, 'feat/milestone-3-hospital-resource-registry']
+    branches: [main, 'feat/**']
 permissions:
   contents: read
 jobs:
