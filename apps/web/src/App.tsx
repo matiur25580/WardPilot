@@ -1,6 +1,8 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import PatientFlowPanel from './PatientFlowPanel';
 import OperationsPanel from './OperationsPanel';
+import OperationalIntelligencePanel from './OperationalIntelligencePanel';
+import './intelligence.css';
 import './operations.css';
 
 type Identity = {
@@ -121,6 +123,7 @@ export default function App() {
       </aside></section>
       <PatientFlowPanel accessToken={session.accessToken} facilities={facilities} />
       <OperationsPanel accessToken={session.accessToken} facilities={facilities} role={session.organization.role} />
+      <OperationalIntelligencePanel accessToken={session.accessToken} facilities={facilities} />
       <section className="registry-roadmap"><div><span className="kicker">RESOURCE HIERARCHY</span><h2>One connected physical model</h2></div><div className="hierarchy"><span>Facility</span><b>→</b><span>Building / Department</span><b>→</b><span>Ward</span><b>→</b><span>Bed inventory</span></div><p>Departments, buildings, wards and bed status workflows are exposed through the tenant-scoped resources API. Bed status transitions are validated to preserve cleaning and maintenance steps.</p></section>
       <footer><span>WARDPILOT</span><span>Hospital &amp; resource registry · Milestone 03</span></footer>
     </main>;

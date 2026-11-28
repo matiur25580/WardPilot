@@ -161,9 +161,9 @@ Registration currently creates organization/user/membership records using compen
 3. **Milestone 3 — Hospital registry:** hospitals, facilities, wards, beds and operational master data.
 4. **Milestone 4 — Patient flow operations:** admissions, transfers, discharge coordination and workflow state transitions.
 5. **Milestone 5 — Workforce and inventory:** staff scheduling, overlap prevention, shift event history, critical supply register, low-stock indicators and idempotent inventory movements (implementation on feature branch).
-6. **Milestone 6 — Operational intelligence:** validated analytics and forecasting based on governed application data.
+6. **Milestone 6 — Operational intelligence:** tenant-scoped capacity, patient-flow, workforce and inventory summaries with deterministic operational signals.
 
-The workforce and inventory implementation is on `feat/milestone-5-workforce-inventory` and awaits CI/review. Roadmap items are plans, not claims of existing functionality. Patient flow is an operational prototype only. It does not replace clinical documentation or hospital information systems. The current release has no consent management, patient portal, clinical notes, diagnosis, medication, orders, insurance, billing, or integration with national health systems. Clinical workflows, privacy, security, regulatory requirements and operational safety require domain-expert review before real-world use.
+Milestone 6 adds aggregate operational intelligence. See [Operational intelligence documentation](docs/operational-intelligence.md) for metric definitions and limitations. Roadmap items are plans, not claims of existing functionality. Patient flow is an operational prototype only. It does not replace clinical documentation or hospital information systems. The current release has no consent management, patient portal, clinical notes, diagnosis, medication, orders, insurance, billing, or integration with national health systems. Clinical workflows, privacy, security, regulatory requirements and operational safety require domain-expert review before real-world use.
 
 ## License
 
